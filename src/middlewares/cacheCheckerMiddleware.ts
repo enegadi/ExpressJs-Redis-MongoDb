@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import redisClient from "../utils/redisClient";
+import redisClient from "../config/redisClient";
 
 // Middleware function to check if the requested data is already cached in Redis
 export const cacheCheckerMiddleware = async (
@@ -13,10 +13,10 @@ export const cacheCheckerMiddleware = async (
     if (cachedData) {
       res.send(JSON.parse(cachedData)); // Send the cached data as the response
     } else {
-      next(); 
+      next();
     }
   } catch (error) {
-    console.error(error); 
+    console.error(error);
     return res.status(500).json({ message: "Server error" });
   }
 };

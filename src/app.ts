@@ -1,7 +1,7 @@
 import express, { Request, Response, Application } from "express";
 import dotenv from "dotenv";
 import bodyParser from "body-parser";
-import redisClient from "./utils/redisClient";
+import redisClient from "./config/redisClient";
 import userRoute from "./routes/userRoutes";
 import postRoute from "./routes/postRoutes";
 import morgan from "morgan";

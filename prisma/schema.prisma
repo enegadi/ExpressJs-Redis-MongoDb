@@ -46,7 +46,9 @@ model Post {
 }
 
 type Comment {
-  name  String
-  email String
-  body  String
+  postId Int
+  id     Int
+  name   String
+  email  String
+  body   String
 }

@@ -1,22 +1,18 @@
 import { Request, Response } from "express";
 import axiosInstance from "../services/axiosInstance";
-import redisClient from "../utils/redisClient";
-import { PrismaClient } from "@prisma/client";
-import User from "../entites/User";
+import redisClient from "../config/redisClient";
+import User from "../interfaces/User";
+import cacheDataInRedis from "../helpers/cacheDataInRedis";
+import prisma from "../config/prismaInstance";
 
-const prisma = new PrismaClient();
 
-/**
- * Get all users function
- * @param req - Express Request object
- * @param res - Express Response object
- */
 export const getUsers = async (req: Request, res: Response) => {
   try {
     // Fetch users data from external API
-    const response = await axiosInstance.get<User[]>("/users");
-    const usersData = response.data;
+    const response = await axiosInstance.get("/users");
+    const usersData: User[] = response.data;
     let usersCount = 0;
+
     if (usersData.length > 0) {
       await Promise.all(
         usersData.map(async (user: User) => {
@@ -31,34 +27,29 @@ export const getUsers = async (req: Request, res: Response) => {
               await prisma.user.create({ data: user });
               usersCount += 1;
             }
-
-            if (usersCount != 0) {
-              console.log(usersCount + " Users added to DB");
-            }
           } catch (error) {
             // Handle the error, log it, or take appropriate action
-            console.error("Error creating/updating user:", error);
+            console.error("Error creatinguser:", error);
           }
         })
       );
+
+      if (usersCount > 0) {
+        console.log(usersCount + " Users added to DB");
+      }
     }
 
     // Store users data in Redis with a 1-hour expiration
-    redisClient.SETEX(req.originalUrl, 3600, JSON.stringify(usersData));
+    cacheDataInRedis(req.originalUrl, 3600, usersData);
 
     // Send the users data as the response
-    res.send(usersData);
+    res.json(usersData);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
-/**
- * Get user by ID
- * @param req - Express Request object
- * @param res - Express Response object
- */
 export const getUserById = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
